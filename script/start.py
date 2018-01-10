@@ -8,6 +8,7 @@ import numpy  as np
 
 from features.statistical  import statiFeature
 from classifiers.SVCmulti  import SVCmul
+from classifiers.RFmulti   import RFmul
 
 from sklearn.preprocessing import MinMaxScaler
 
@@ -27,12 +28,21 @@ def scaleFeature(features):
 	scaler = MinMaxScaler()
 	return scaler.fit_transform(features)
 
+def startSVCMul(s_fea_X, fea_y):
+	svc_mul = SVCmul(s_fea_X, fea_y[0])
+	svc_mul.svmStart()
+
+def startRFMul(s_fea_X, fea_y):
+	rf_mul = RFmul(s_fea_X, fea_y[0])
+	rf_mul.rfStart()
+
 if __name__ == '__main__':
 	fea_X, fea_y = appdata2fea()
 	print(fea_X.shape)
 	print(fea_y.shape)
 
 	s_fea_X = scaleFeature(fea_X)
-	svc_mul = SVCmul(s_fea_X, fea_y[0])
-	svc_mul.svmStart()
+
+	# startSVCMul(s_fea_X, fea_y)
+	startRFMul(s_fea_X, fea_y)
 
