@@ -4,19 +4,23 @@
 # 2017-12-26 by r4mind
 
 from sklearn import svm
+from sklearn.decomposition   import PCA
 from sklearn.model_selection import KFold, cross_val_score, cross_val_predict, train_test_split
 from sklearn.preprocessing   import label_binarize, binarize
+from sklearn.feature_selection import RFE
 # from sklearn.multiclass      import OneVsRestClassifier   
 from sklearn.metrics         import classification_report,  accuracy_score, roc_curve, auc, precision_score, recall_score
 
 from classifiers.plotEstimate import plotE
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 class SVCmul:
-	def __init__(self, X, y):
+	def __init__(self, X, y, namelist):
 		self.X = X
 		self.y = y
+		self.namelist = namelist
 
 	def svmStart(self):
 		# train_X = self.X[:-100]
@@ -26,19 +30,30 @@ class SVCmul:
 
 		train_X, test_X, train_y, test_y = train_test_split(self.X, self.y, test_size = 0.2, random_state = 0)
 
-		# clf = svm.LinearSVC(C = 1000)
 		clf = svm.SVC(decision_function_shape='ovo', C = 3500, kernel='rbf', probability = True)
-		score_y = clf.fit(train_X, train_y)
+		rfe = RFE(estimator = clf, n_features_to_select = 57, step = 1)
 
-		test_y_bin = label_binarize(test_y, classes = [1, 2, 3, 4])
-		n_classes = test_y_bin.shape[1]
+		rfe.fit(train_X, train_y)
 
-		# k_fold = KFold(n_splits = 4)
-		# # scores = cross_val_score(clf, train_X, train_y, cv = k_fold)
-		# result = cross_val_predict(clf, self.X, self.y, cv = k_fold)
+		rank = rfe.ranking_
 
-		pre_res = clf.predict(test_X)
-		pro_res = clf.predict_proba(test_X)
+		fea = np.arange(57)
+
+		width = 0.5
+		plt.bar(range(len(rank)), rank, width = width)
+
+		plt.ylim([0.0, 1.75])
+
+		plt.xlabel("feature")
+		plt.ylabel("rank")
+
+		plt.xticks(fea, self.namelist, fontsize = 5, rotation = 45)
+
+		plt.show()
+		# score_y = clf.fit(train_X, train_y)
+
+		# pre_res = clf.predict(test_X)
+		# pro_res = clf.predict_proba(test_X)
 
 		# fpr = dict()
 		# tpr = dict()
@@ -76,13 +91,13 @@ class SVCmul:
 		# plt.legend(loc="lower right")
 		# plt.show()
 
-		pe = plotE(pro_res, test_y)
-		pe.plotThreshold_perform()
+		# pe = plotE(pro_res, test_y)
+		# pe.plotThreshold_perform()
 
-		print(pro_res)
+		# print(pro_res)
 
-		print(classification_report(test_y, pre_res))
-		print(accuracy_score(test_y, pre_res))
+		# print(classification_report(test_y, pre_res))
+		# print(accuracy_score(test_y, pre_res))
 
 
 	# def getThresholdedData(self, threshold, pro_res):

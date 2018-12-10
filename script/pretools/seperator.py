@@ -9,11 +9,14 @@ import sys
 import getopt
 
 import pandas as pd
+import scapy.all as scapy
 
 def createBurst(sf):
 	cnt, prevts = 0, 0.0
 	burstslist = []
+	tstamplist = []
 	burst = []
+	time  = []
 
 	pcap = dpkt.pcap.Reader(sf)
 
@@ -31,26 +34,28 @@ def createBurst(sf):
 		prevts = ts
 		cnt += 1
 
+		tstamplist.append(ts)
+
 	burstslist.append(burst)
 	burst = []
 
-	return burstslist
+	return burstslist, tstamplist
 
 
-def createFlow(burstslist, dstfilepath):
+def createFlowFile(burstslist, dstfilepath, nowip):
 	flowslist = []
 	pkglength = []
 	bcnt = 1
 
 	for burst in burstslist:
 		# check whether the burstXX exists
-		if not os.path.exists(dstfilepath + '/burst' + str(bcnt)):
-			os.makedirs(dstfilepath + '/burst' + str(bcnt))
+		if not os.path.exists(dstfilepath):
+			os.makedirs(dstfilepath)
 
 		flowsdict = {}
-		pkginflow = {}
-		incompkg  = {}
-		outcompkg = {}
+		# pkginflow = {}
+		# incompkg  = {}
+		# outcompkg = {}
 
 		for pkt in burst:
 			eth = dpkt.ethernet.Ethernet(pkt)
@@ -67,12 +72,12 @@ def createFlow(burstslist, dstfilepath):
 			for key in flowsdict.keys():
 				if set(key) == ipset:
 					flowsdict[key].append(pkt)
-					if ip.dst == b'\xc0\xa8\x02\x03':
-						pkginflow[key].append(-len(ip.data))
-						incompkg[key].append(-len(ip.data))
-					else:
-						pkginflow[key].append(len(ip.data))
-						outcompkg[key].append(len(ip.data))
+					# if ip.dst in nowip: #  b'\xc0\xa8\x02\x03':
+					# 	pkginflow[key].append(len(ip.data))
+					# 	incompkg[key].append(len(ip.data))
+					# else:
+					# 	pkginflow[key].append(len(ip.data))
+					# 	outcompkg[key].append(len(ip.data))
 
 					inflag = 1
 					break;
@@ -80,25 +85,25 @@ def createFlow(burstslist, dstfilepath):
 			if inflag == 0:
 				iptuple = tuple(ipset)
 				flowsdict[iptuple] = []
-				pkginflow[iptuple] = []
-				incompkg[iptuple]  = []
-				outcompkg[iptuple] = []
+				# pkginflow[iptuple] = []
+				# incompkg[iptuple]  = []
+				# outcompkg[iptuple] = []
 
 				flowsdict[iptuple].append(pkt)
-				if ip.dst == b'\xc0\xa8\x02\x03':
-					pkginflow[iptuple].append(-len(ip.data))
-					incompkg[iptuple].append(-len(ip.data))
-				else:
-					pkginflow[iptuple].append(len(ip.data))
-					outcompkg[iptuple].append(len(ip.data))
+				# if ip.dst in nowip: # b'\xc0\xa8\x02\x03':
+				# 	pkginflow[iptuple].append(-len(ip.data))
+				# 	incompkg[iptuple].append(-len(ip.data))
+				# else:
+				# 	pkginflow[iptuple].append(len(ip.data))
+				# 	outcompkg[iptuple].append(len(ip.data))
 
-		flowslist.append(flowsdict)
-		pkglength.append(pkginflow)
+		# flowslist.append(flowsdict)
+		# pkglength.append(pkginflow)
 
 
 		fcnt = 1
 		for f in flowsdict.values():
-			with open(dstfilepath + '/burst' + str(bcnt) + '/flow' + str(fcnt) + '.pcap', 'wb+') as df:
+			with open(dstfilepath + 'flow_' + str(bcnt) + '_' + str(fcnt) + '.pcap', 'wb+') as df:
 				flow = dpkt.pcap.Writer(df)
 				for pkt in f:
 					flow.writepkt(pkt)
@@ -106,11 +111,11 @@ def createFlow(burstslist, dstfilepath):
 
 		bcnt += 1
 
-	return pkglength
 
-def createFlowPD(burstslist):
+def createFlowPD(burstslist, tstamplist, nowip):
 	burst   = []
 	flow    = []
+	uburst  = []
 	length  = []
 	inorout = []
 
@@ -125,6 +130,10 @@ def createFlowPD(burstslist):
 	for bursti in range(len(burstslist)):
 
 		ipsetvali = []
+		cnt = 0
+		curuburst = 1
+		prevflag = 0
+		curflag = 0
 		for pkt in burstslist[bursti]:
 			eth = dpkt.ethernet.Ethernet(pkt)
 
@@ -146,9 +155,9 @@ def createFlowPD(burstslist):
 				ipsetvali.append(ipset)
 				flow.append(tuple(ipset))
 
-			if ip.dst == b'\xc0\xa8\x02\x03':
+			if ip.dst in nowip: # b'\xc0\xa8\x02\x05'
 				length.append(-len(ip.data))
-				inorout.append(1)
+				curflag = 1
 				# inburst.append(bursti + 1)
 				# if inflag == 0:
 				# 	inflow.append(tuple(ipset))
@@ -157,13 +166,28 @@ def createFlowPD(burstslist):
 				# inlength.append(-len(ip.data))
 			else:
 				length.append(len(ip.data))
-				inorout.append(0)
+				# inorout.append(0)
+				curflag = 0
+
+			inorout.append(curflag)
+
+			if cnt == 0:
+				prevflag = curflag
+
+			if prevflag != curflag:
+				curuburst += 1
+				prevflag = curflag
+
+			uburst.append(curuburst)
+			cnt += 1
 
 	flowPD = pd.DataFrame({
 		'Burst'  : burst  ,
 		'Flow'   : flow   ,
+		'UBurst' : uburst ,
 		'Inorout': inorout,
-		'Length' : length
+		'Length' : length ,
+		'TStamp' : tstamplist
 	})
 
 	# inflowPD = pd.DataFrame({
@@ -182,6 +206,35 @@ def createFlowPD(burstslist):
 	# print(type(flows))
 
 	return flowPD
+
+
+def geneTCPStream(srcpath, value, phonename, pcapnum):
+	# cmd = 'tshark -q -r /tmp/%s -z follow,tcp,ascii,%s' % (pcappath, streamindex)
+	# sf = '/tmp/' + srcpath + '.pcap'
+	dp = '/tmp/tcpstream/' + str(value) + '/'
+
+	# pkgs = scapy.rdpcap(sf)
+	# for p in pkgs:
+	# 	print(repr(p['TCP'])) 
+
+	if not os.path.exists(dp):
+		os.makedirs(dp)
+
+	si = 0
+	while True:
+		# os.system("tshark -r %s -w %s -F pcap -z follow,tcp,ascii,%s" % (sf, df + srcpath + '_' + str(si) + '.pcap', str(si)))
+		df = dp + phonename + '_app' + str(value) + str(pcapnum) + '_tcps' + str(si) + '.pcap'
+		os.system("tshark -r %s -w %s -F pcap -Y 'tcp.stream==%s'" % (srcpath, df, str(si)))
+
+		if os.path.getsize(df) < 50:
+			break
+		else:
+			si += 1
+
+
+
+
+
 
 def main(argv):
 	srcfilepath = ''
@@ -213,6 +266,8 @@ def main(argv):
 
 ################# TEST ###################
 if __name__ == '__main__':
-	main(sys.argv[1:])
+	# main(sys.argv[1:])
+
+	geneTCPStream('meizu_TikTok')
 
 # tcp and !(tcp.analysis.flags && !tcp.analysis.window_update) and !(tcp.flags.reset eq 1) and !(sctp.chunk_type eq ABORT) and ip.addr==192.168.2.2

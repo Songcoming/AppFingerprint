@@ -13,8 +13,11 @@ def filter(sf):
 	fn    =  sf[-index: ].split('.')
 	df    =  dp + fn[0] + "_aff." + fn[-1]
 
-	cmd_filter = "'tcp && !(tcp.port == 80) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
+	# cmd_filter = "'tcp && !(tcp.port == 80) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
 
+	# 2018-03-20 by r4mind
+	cmd_filter = "'(tcp || http) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
+	# end
 	os.system("tshark -r %s -w %s -F pcap -Y %s" % (sf, df, cmd_filter))
 
 	return df

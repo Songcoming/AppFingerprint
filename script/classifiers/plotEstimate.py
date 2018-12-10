@@ -23,12 +23,13 @@ class plotE:
 
 		for i in range(10):
 			result2d = binarize(self.pro_res, thresholdlist[i])
-			print(result2d)
+			# print(result2d)
 			result1d, unclassified = self.__bin2one(result2d)
 			print(result1d)
-			print(self.test_y)
+			# print(self.test_y)
 
 			nozero_result1d, nozero_test_y = self.__filterZeros(result1d)
+			print(nozero_result1d, nozero_test_y)
 
 			accuracylist[i]  = accuracy_score(nozero_test_y, nozero_result1d)
 			precisionlist[i] = precision_score(nozero_test_y, nozero_result1d, average=None)[1:].mean()
@@ -65,18 +66,28 @@ class plotE:
 
 		for i in result2d:
 			if sum(i) == 1:
-				for j in range(i.shape[0]):
-					if i[j] == 1:
-						result1d.append(j + 1)
-						break
+				# added for reinforce test
+				if i.shape[0] == 5 and i[0] == 1:
+					result1d.append(0.0)
+				else:
+					for j in range(i.shape[0]):
+						if i[j] == 1:
+							# add for reinforce test
+							if i.shape[0] == 5:
+								result1d.append(j)
+							else:
+								result1d.append(j + 1)
+							break
 			elif sum(i) > 1:
 				comparedict = {}
 
 				for j in range(i.shape[0]):
 					if i[j] == 1:
 						comparedict[j] = self.pro_res[row][j]
-
-				result1d.append(max(comparedict, key = comparedict.get) + 1)
+				if i.shape[0] == 5:
+					result1d.append(max(comparedict, key = comparedict.get)) 
+				else:
+					result1d.append(max(comparedict, key = comparedict.get) + 1)
 			else:
 				result1d.append(0.0)
 				unclassified += 1
