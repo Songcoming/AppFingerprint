@@ -38,20 +38,27 @@ class statiFeature:
 		bins  = self.getbiSeries()
 		ins   = self.getinSeries()
 		outs  = self.getoutSeries()
-		times = self.gettimeSeries()
- 
-		tmp1 = pd.merge(bins, ins,   left_index = True, right_index = True, how = "left")
-		tmp2 = pd.merge(tmp1, outs,  left_index = True, right_index = True, how = "left")
-		tmp3 = pd.merge(tmp2, times, left_index = True, right_index = True, how = "left")
 
-		print(tmp3.shape)
+		# print(bins.shape)
+		# print(ins.shape)
+		# print(outs.shape)
+		# times = self.gettimeSeries()
+ 
+		tmp1 = pd.merge(bins, ins,   left_index = True, right_index = True, how = "left")		
+		tmp2 = pd.merge(tmp1, outs,  left_index = True, right_index = True, how = "left")
+		
+		# tmp3 = pd.merge(tmp2, times, left_index = True, right_index = True, how = "left")
+
+		# print(tmp3.shape)
 
 		if self.features is None:
-			self.features = tmp3
+			self.features = tmp2
 		else:
-			self.features = self.features.append(tmp3)
+			self.features = self.features.append(tmp2)
 
-		print(self.features.shape)
+		# self.features = self.features.append(tmp2)
+
+		# print(self.features.shape)
 		# print(self.features)
 
 		# ycur = pd.DataFrame(np.ones((tmp3.shape[0], 1)) * self.result, columns = ['yvalue'])
@@ -64,7 +71,7 @@ class statiFeature:
 		# print(self.yvalue.shape)
 
 		self.namelist = self.features.columns.values
-		print(self.namelist)
+		# print(self.namelist)
 
 
 		# tmp2.drop(['min_y', 'p50_y', 'p30_y', 'p20_y', 'skew', 'count', 'max', 'p90', 
@@ -83,11 +90,12 @@ class statiFeature:
 	def chooseLowwestFlow(self, lowwest):
 		tmplist = self.features[self.features['count_x'] >= lowwest]
 		# tmplist.drop(['count_x'], axis = 1, inplace = True)
-		testX = tmplist.drop(['yvalue'], axis = 1).fillna(0).values
+		testX = tmplist.drop(['yvalue', 'yvalue_x', 'yvalue_y'], axis = 1).fillna(0).values
+		print(testX.shape)
 		testy = tmplist['yvalue'].values
 
-		print(testX.shape)
-		print(testy.shape)
+		# print(testX.shape)
+		# print(testy.shape)
 
 		return testX, testy
 
@@ -128,12 +136,12 @@ class statiFeature:
 
 	def gettimeSeries(self):
 		btimehandle = self.tmphandle.groupby(["Burst", "Flow", "UBurst"])
-		itimehandle = self.tmphandle[self.tmphandle.Inorout == 0].groupby(["Burst", "Flow", "UBurst"])
-		otimehandle = self.tmphandle[self.tmphandle.Inorout == 1].groupby(["Burst", "Flow", "UBurst"])
+		# itimehandle = self.tmphandle[self.tmphandle.Inorout == 0].groupby(["Burst", "Flow", "UBurst"])
+		# otimehandle = self.tmphandle[self.tmphandle.Inorout == 1].groupby(["Burst", "Flow", "UBurst"])
 
 		buburstts = btimehandle.max() - btimehandle.min()
-		iuburstts = itimehandle.max() - itimehandle.min()
-		ouburstts = otimehandle.max() - otimehandle.min()
+		# iuburstts = itimehandle.max() - itimehandle.min()
+		# ouburstts = otimehandle.max() - otimehandle.min()
 
 		flowtime = buburstts["TStamp"].groupby(["Burst", "Flow"]).sum()
 
@@ -172,6 +180,29 @@ class statiFeature:
 
 		return uburstdict
 
+	def getFlowProDistribution(self):
+
+		# 2019-12-10 by r4mind
+
+		self.pkghandle = self.tmphandle.groupby(["Burst", "Flow"])
+
+		return np.array(self.getMean()["Length"])
+
+
+	def getFlowTStamp(self):
+
+		# 2019-12-17 by r4mind
+		
+		tstamphandle = self.tmphandle.groupby(["Burst", "Flow"])
+		flowlengthT = tstamphandle.max() - tstamphandle.min()
+		# print(flowlengthT)
+
+		return flowlengthT["TStamp"]
+
+
+	def getSum(self):
+		return self.pkghandle.sum()
+
 	def getMean(self):
 		return self.pkghandle.mean()
 
@@ -182,6 +213,7 @@ class statiFeature:
 		return self.pkghandle.max()
 
 	def getMAD(self):
+		# print(self.pkghandle.mad())
 		return self.pkghandle.mad()
 
 	def getStandard(self):
@@ -200,6 +232,7 @@ class statiFeature:
 		return self.pkghandle.quantile(q)
 
 	def getCount(self):
+		# print(self.pkghandle.count()['Length'])
 		return self.pkghandle.count()
 
 	def getMmm(self):
@@ -278,7 +311,8 @@ class statiFeature:
 			'p80'   : self.getPercentiles(.8)['Length'],
 			'p90'   : self.getPercentiles(.9)['Length'],
 			'count' : self.getCount()['Length']        ,
-			'mmm'   : self.getMmm()['Length']          ,
+			# 'mmm'   : self.getMmm()['Length']          ,
+			'yvalue': self.result
 			# 'second' : self.getSecond(),
 			# 'third'  : self.getThird(),
 			# 'seconds'  : self.getSecs(),
@@ -302,6 +336,7 @@ class statiFeature:
 
 		# y = np.ones((1, self.X.shape[0])) * result
 		# print(y.shape)
+		# print(X)
 
 		return X
 

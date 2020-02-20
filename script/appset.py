@@ -90,9 +90,14 @@ apptraindict = {
 # 	# 'neteasemusic'    : 1,
 # 	'qq_mi_6'              : 7,
 # 	'taobao_mi_6'          : 8,
-# 	'tiktok_mi_6'          : 9,
+# 	'tiktok_mi_6'          : 9,                                                                    
 # 	'toutiao_mi_6'         : 10,
 # 	'wechat_mi_6'          : 4,
 # }
 
-phonelist = ['meizu']
+# phonelist = ['lenovo', 'honor', 'meizu']
+phonelist = ['M1', 'H1']
+grouplist = ["A1", "A2", "B1", "B2", "C1", "C2"]
+appindex = [2, 4, 8, 9, 11, 92]
+localiplist = ['192.168', '172.22']
+localiplistbin = [[b'\xc0\xa8\x02\x05', b'\xc0\xa8\x02\x04', b'\xc0\xa8\x02\x09']]

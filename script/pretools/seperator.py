@@ -178,13 +178,15 @@ def createFlowPD(burstslist, tstamplist, nowip):
 				curuburst += 1
 				prevflag = curflag
 
-			uburst.append(curuburst)
+			# uburst.append(curuburst)
 			cnt += 1
+
+	# print(tstamplist)
 
 	flowPD = pd.DataFrame({
 		'Burst'  : burst  ,
 		'Flow'   : flow   ,
-		'UBurst' : uburst ,
+		# 'UBurst' : uburst ,
 		'Inorout': inorout,
 		'Length' : length ,
 		'TStamp' : tstamplist
@@ -208,10 +210,86 @@ def createFlowPD(burstslist, tstamplist, nowip):
 	return flowPD
 
 
-def geneTCPStream(srcpath, value, phonename, pcapnum):
+def getStaticalPD(phonename, group, value, index, nowip):
+
+	pcapfiles = []
+	ipsetvali = []
+	burst   = []
+	flow    = []
+	length  = []
+	inorout = []
+
+	bursti = ''
+
+	fpath = "../M_H_1/" + phonename + "/" + group + "/" + str(value) + "/plist" + str(index) + ".txt"
+
+	with open(fpath, "r") as f:
+		for line in f:
+			pcapfiles.append("../" + line[:-1])
+
+	for pcappath in pcapfiles:
+		with open(pcappath, mode='rb') as sf:
+			print(pcappath)
+
+			psize = os.path.getsize(pcappath)
+			if psize >= 24:
+				pcap = dpkt.pcap.Reader(sf)
+
+				bursti = pcappath.split('/')[-1][:-5]
+
+				for ts, buf in pcap:
+					# print(len(buf))
+					if len(buf) > 10:
+						eth = dpkt.ethernet.Ethernet(buf)
+
+						ip = eth.data
+						ipset = set([ip.src, ip.dst])
+
+						inflag = 0
+						curtup = ()
+						
+						for i in ipsetvali:
+							if ipset == i:			
+								curtup = tuple(i)
+								flow.append(curtup)
+								inflag = 1
+								break;
+
+						if inflag == 0:
+							ipsetvali.append(ipset)
+							flow.append(tuple(ipset))
+
+						if ip.dst in nowip: # b'\xc0\xa8\x02\x05'
+							length.append(-len(ip.data))
+							curflag = 1
+						else:
+							length.append(len(ip.data))
+							# inorout.append(0)
+							curflag = 0
+
+						inorout.append(curflag)
+					
+						burst.append(bursti)
+
+	flowPD = pd.DataFrame({
+		'Burst'  : burst  ,
+		'Flow'   : flow   ,
+		'Inorout': inorout,
+		'Length' : length ,
+
+	})
+
+	return flowPD
+		
+
+
+
+
+def geneTCPStream(srcpath, group, value, phonename, pcapnum):
 	# cmd = 'tshark -q -r /tmp/%s -z follow,tcp,ascii,%s' % (pcappath, streamindex)
 	# sf = '/tmp/' + srcpath + '.pcap'
-	dp = '/tmp/tcpstream/' + str(value) + '/'
+	# dp = '../../../perfectsame/' + phonename + '/' + str(value) + '/'
+	dp = '../../../M_H/tcp/' + phonename + '/' + group + '/' + str(value) + '/'
 
 	# pkgs = scapy.rdpcap(sf)
 	# for p in pkgs:
@@ -223,7 +301,8 @@ def geneTCPStream(srcpath, value, phonename, pcapnum):
 	si = 0
 	while True:
 		# os.system("tshark -r %s -w %s -F pcap -z follow,tcp,ascii,%s" % (sf, df + srcpath + '_' + str(si) + '.pcap', str(si)))
-		df = dp + phonename + '_app' + str(value) + str(pcapnum) + '_tcps' + str(si) + '.pcap'
+		# df = dp + phonename + '_app' + str(value) + str(pcapnum) + '_tcps' + str(si) + '_5.pcap'
+		df = dp + phonename + group + '_' + str(value) + '_' + str(pcapnum) + '_tcps' + str(si) + '.pcap'
 		os.system("tshark -r %s -w %s -F pcap -Y 'tcp.stream==%s'" % (srcpath, df, str(si)))
 
 		if os.path.getsize(df) < 50:
@@ -266,8 +345,7 @@ def main(argv):
 
 ################# TEST ###################
 if __name__ == '__main__':
-	# main(sys.argv[1:])
-
-	geneTCPStream('meizu_TikTok')
+	# getStaticalPD('honor', 2, 120, [b'\xc0\xa8\x02\x05', b'\xc0\xa8\x02\x04', b'\xc0\xa8\x02\x09'])
+	geneTCPStream("../../../M_H/aff/H1C1_4_aff.pcap", "C1", 4, "H1", 1)
 
 # tcp and !(tcp.analysis.flags && !tcp.analysis.window_update) and !(tcp.flags.reset eq 1) and !(sctp.chunk_type eq ABORT) and ip.addr==192.168.2.2

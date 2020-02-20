@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+	#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 # 2018-10-31 by r4mind
@@ -11,7 +11,6 @@ import numpy               as np
 from classifiers.RFmulti     import RFmul
 from classifiers.MetricL     import LMNNforkNN
 from classifiers.KNeigh      import KNeigh
-from classifiers.Adaboost    import AdaBoost
 from sklearn.metrics         import precision_score, recall_score, accuracy_score, roc_curve, auc
 from sklearn.preprocessing   import binarize
 from matplotlib          import pyplot as plt
@@ -399,7 +398,7 @@ def DisturbbinSample(phonename, group, value, index):
 	# 	pcapfiles = sample(pcapfiles, random)
 		# print(len(pcapfiles))
 
-	with open("M_H_1/" + phonename + "/" + group + "/" + str(value) + "/plist" + str(index) + ".txt", "r") as f:
+	with open("M_H_tcp_1/" + phonename + "/" + group + "/" + str(value) + "/tcplist" + str(index) + ".txt", "r") as f:
 		for line in f:
 			pcapfiles.append(line[:-1])
 
@@ -429,27 +428,39 @@ def DisturbbinSample(phonename, group, value, index):
 
 				if portkey not in portdict:
 					portdict[portkey] = []
-					pkgin = []
-					pkgot = []
+					pkgin = 0
+					pkgot = 0
 					portpkgdict[portkey] = [pkgin, pkgot]
 
 				# tmplength = []
-				tmppkgin  = []
-				tmppkgot = []
+				# tmppkgin  = 0
+				# tmppkgot = 0
 				for pkg in pkgs:
 					if 'TCP' in pkg:
 						# tmplength.append(pkg['IP'].len)
 						if pkg['TCP'].sport == portkey:
 							inlength += pkg['IP'].len
-							tmppkgin.append(pkg['IP'].len)
+							portpkgdict[portkey][0] += 1
 						else:
 							otlength += pkg['IP'].len
-							tmppkgot.append(pkg['IP'].len)
+							portpkgdict[portkey][1] += 1
+
+				# print(portpkgdict[portkey])
 
 				# portpkgdict[portkey].extend(tmplength)
 				# portpkgdict[portkey][0].extend(tmppkgin)
 				# portpkgdict[portkey][1].extend(tmppkgin)
-				portdict[portkey].append((pcaplength, inlength, otlength, p))
+				inavarage = 0
+				otavarage = 0
+
+				if portpkgdict[portkey][0] != 0:
+					inavarage = inlength // float(portpkgdict[portkey][0])
+
+				if portpkgdict[portkey][1] != 0:
+					otavarage = otlength // float(portpkgdict[portkey][1])
+				
+
+				portdict[portkey].append((pcaplength, inavarage, otavarage, p))
 				
 
 				# print(portdict)
@@ -457,7 +468,7 @@ def DisturbbinSample(phonename, group, value, index):
 	# if 80 in portdict:
 	# 	sum80  = len(portdict[80])
 	# if 443 in portdict:
-	# 	sum443 = len(portdict[443])
+	# 	sum443 = len(portdict[443])S
 
 	feature80  = {}
 	feature80pkg = {}
@@ -474,29 +485,29 @@ def DisturbbinSample(phonename, group, value, index):
 		list80  = [0 for x in range(25)]
 		list443 = [0 for x in range(25)]
 
-		if 80 in portdict:
-			# print(sorted(portdict[80]))
-			for f, g in groupby(sorted(portdict[80], key = lambda y: y[i]), key = lambda x: int(math.log(x[i] + 1, 2))):
-				# print(f, list(g))
-				tmpg = list(g)
-				# print(f, tmpg)
-				# tmplist.append((f, tmpg))
-				feature80[f] = len(tmpg)
-				# feature802nd[f] = [tup[1] for tup in tmpg]			# feature802nd[f] = list(g)[0]
-			sum80 = 0
-			for s in feature80.values():
-				sum80 += s
+		# if 80 in portdict:
+		# 	# print(sorted(portdict[80]))
+		# 	for f, g in groupby(sorted(portdict[80], key = lambda y: y[i]), key = lambda x: int(math.log(x[i] + 1, 2))):
+		# 		# print(f, list(g))
+		# 		tmpg = list(g)
+		# 		# print(f, tmpg)
+		# 		# tmplist.append((f, tmpg))
+		# 		feature80[f] = len(tmpg)
+		# 		# feature802nd[f] = [tup[1] for tup in tmpg]			# feature802nd[f] = list(g)[0]
+		# 	sum80 = 0
+		# 	for s in feature80.values():
+		# 		sum80 += s
 
-			for n, m in feature80.items():
-				list80[n] = float(m) / float(sum80)
-
-
-			# print(sum(list80))
-			# print(sum80)
-			# print(msum)
+		# 	for n, m in feature80.items():
+		# 		list80[n] = float(m) / float(sum80)
 
 
-		finalfea80.extend(list80[5:])
+		# 	# print(sum(list80))
+		# 	# print(sum80)
+		# 	# print(msum)
+
+
+		# finalfea80.extend(list80[5:])
 
 
 
@@ -517,11 +528,12 @@ def DisturbbinSample(phonename, group, value, index):
 			for n, m in feature443.items():
 				list443[n] = float(m) / float(sum443)
 
-			# print(sum(list80))
+			# print(len(list443))
 
 
 
 		finalfea443.extend(list443[5:])
+		# print(finalfea443)
 
 
 	# if 443 in portdict:
@@ -571,8 +583,8 @@ def DisturbbinSample(phonename, group, value, index):
 	# 	finalfea443pkg.extend(list443pkg[5:])
 
 	# return finalfea80pkg, finalfea443pkg #, statefea
-	return finalfea80, finalfea443
-	# return finalfea443, statefea
+	# return finalfea80, finalfea443
+	return finalfea443#, statefea
 	# return statefea
 
 
@@ -952,23 +964,21 @@ def pkgLengthDisturb(feature2nd):
 		return fea2nddict
 
 
-def toCSV(csvdict, csvheader, appnum, csvname):
+def toCSV(csvdict, csvheader, appnum, csvname, trainlist):
 	csvlist = []
-	for train in csvheader:	
+	# print(csvheader)
+	for train in trainlist:	
 		for j in appnum:
 			csvitem = []
 			for g in csvheader:
-				csvitem.append(csvdict[(train, g)][j]["tpr"])
-				csvitem.append(csvdict[(train, g)][j]["fpr"])
+				csvitem.append(csvdict[(train[1], g)][j]["tpr"])
+				csvitem.append(csvdict[(train[1], g)][j]["fpr"])
 			csvlist.append(csvitem)
 
 	with open("csv/" + csvname + ".csv", "w") as f:
 		f_csv = csv.writer(f)
 		f_csv.writerow(csvheader)
 		f_csv.writerows(csvlist)
-
-
-
 
 
 
@@ -992,14 +1002,14 @@ def trainModel(X, y, modelname):
 
 	###============ Random Forest ============###
 
-	# rfh = RFmul(X, y)
-	# rfh.rfStart()
-	# print(rfh.ascore)
-	# print(rfh.getPR())
-	# print("trainset test")
-	# print(rfh.testByTrainset())
+	rfh = RFmul(X, y)
+	rfh.rfStart()
+	print(rfh.ascore)
+	print(rfh.getPR())
+	print("trainset test")
+	print(rfh.testByTrainset())
 
-	# rfh.saveModel(modelname)
+	rfh.saveModel(modelname)
 
 	###=============== KNeigh ================###
 
@@ -1007,17 +1017,6 @@ def trainModel(X, y, modelname):
 	# kneigh.exekNN()
 
 	# kneigh.saveModel(modelname)
-
-	###============ AdaBoost ============###
-
-	rfh = AdaBoost(X, y)
-	rfh.adaStart()
-	print(rfh.ascore)
-	print(rfh.getPR())
-	print("trainset test")
-	print(rfh.testByTrainset())
-
-	rfh.saveModel(modelname)
 
 
 
@@ -1030,6 +1029,7 @@ def testModel(X, y, modelname, appnum):
 	# 		columnDel.append(i)
 
 	# X = np.delete(X, columnDel, axis = 1)
+
 	scoredict = {
 		2:  {"tpr" : 0, "fpr" : 0},
 		4:  {"tpr" : 0, "fpr" : 0},
@@ -1037,6 +1037,7 @@ def testModel(X, y, modelname, appnum):
 		9:  {"tpr" : 0, "fpr" : 0},
 		11: {"tpr" : 0, "fpr" : 0},
 	}
+
 
 	with open('pickles/' + modelname + '.pickle', 'rb') as fr:
 		new_clf = pickle.load(fr)
@@ -1160,13 +1161,14 @@ if __name__ == '__main__':
 	# for k, v in appset.apptraindict.items():
 	# 	classifyStream(k, v)
 
-	# trainfea80  = []
+
 	# testfea80   = []
 	# trainfea443 = []
 	# testfea443  = []
 
 	# train_values = []
 	# test_values  = []
+
 
 	################################
 
@@ -1175,7 +1177,7 @@ if __name__ == '__main__':
 	# # # # list2d443 = [[0.0 for y in range(17)] for x in range(100)]
 	phonelist = ["M1"]
 	# grouplist = ["A1C1", "A1C2", "A2C1", "A2C2", "B1C1", "B1C2", "B2C1", "B2C2"]
-	grouplist = ["A1C1", "A1C2", "B1C1", "B1C2", "A2C1", "A2C2", "B2C1", "B2C2"]
+	grouplist = ["A1", "A2", "B1", "B2", "C1", "C2"]
 	appnum =  [2, 4, 8, 9, 11]
 	# # # picsig = 1
 	# datadict = {
@@ -1230,8 +1232,8 @@ if __name__ == '__main__':
 	# 				# list80, list443 = portLengthDisturbbin(i, j, random = 100)
 	# 				# statefea = portLengthDisturbbin(i, j, random = 100)
 	# 				# statefea = DisturbbinSample(i, j, k)
-	# 				list80, list443 = DisturbbinSample(i, l, j, k)
-	# 				# list443, statefea = DisturbbinSample(i, l, j, k)
+	# 				# list80, list443 = DisturbbinSample(i, l, j, k)
+	# 				list443 = DisturbbinSample(i, l, j, k)
 
 	# 				# print(len(list80))
 	# 				# print(len(list443))
@@ -1243,12 +1245,12 @@ if __name__ == '__main__':
 
 	# 				# print(len(statefea))
 
-	# 				trainfea80.append(list80)
+	# 				# trainfea80.append(list80)
 	# 				trainfea443.append(list443)
 	# 				# train_state.append(statefea)
 	# 				train_values.append(j)
 
-				# trainfea80.extend(list80)
+	# 			# trainfea80.extend(list80)
 				# trainfea443.extend(list443)
 				# train_values.extend([j for x in range(len(list80))])
 
@@ -1295,9 +1297,9 @@ if __name__ == '__main__':
 
 	# 	###=========
 
-			# datadict[i][l] = [np.hstack((np.array(train_state), np.array(trainfea443))), np.array(train_values)]
+			# datadict[i][l] = [np.array(trainfea443), np.array(train_values)]
 			# print(datadict[i][l][0].shape)
-			# np.savetxt('M_H_tcp_' + i + l + '_ada.txt', datadict[i][l][0])
+			# np.savetxt('M_H_tcp_' + i + l + '_pkg.txt', datadict[i][l][0])
 
 		###=========
 
@@ -1333,27 +1335,27 @@ if __name__ == '__main__':
 	##         read fea txt         ##
 	##################################
 
-	# train_value = np.empty(0)
-	train_value = []
-	for i in appnum:
-		for j in range(150):
-			train_value.append(i)
+	train_value = np.empty(0)
+	# train_value = []
+	# for i in appnum:
+	# 	for j in range(150):
+	# 		train_value.append(i)
 
 	for k in phonelist:
 		print(k)
 		for l in grouplist:
-			train_fea = np.loadtxt('M_H_' + k + l + '.txt')			
+			train_fea = np.loadtxt('M_H_' + k + l + '_stati_enc.txt')			
 			print(l)
 			# train_fea = np.hstack((np.loadtxt('feature_pkg_final' + k + '_5.txt'), np.loadtxt('feature_sta_final' + k + '_5.txt')))
 			# train_fea = np.hstack((train_fea, np.loadtxt('feature_sess_final' + k + '_same.txt')))
-			datadict[k][l] = [train_fea, np.array(train_value)]
-			# train_value = np.loadtxt('M_H_tcp_' + k + l + '_stati_y.txt')
-			# for i in range(len(train_value)):
-			# 	if np.isnan(train_value[i]):
-			# 		train_value[i] = train_value[i - 1]
+			# datadict[k][l] = [train_fea, np.array(train_value)]
+			train_value = np.loadtxt('M_H_' + k + l + '_stati_enc_y.txt')
+			for i in range(len(train_value)):
+				if np.isnan(train_value[i]):
+					train_value[i] = train_value[i - 1]
 
 		# datadict[k] = [np.loadtxt('feature_stati_final' + k + '_5.txt'), train_value]
-			# datadict[k][l] = [train_fea, train_value]
+			datadict[k][l] = [train_fea, train_value]
 
 
 
@@ -1373,24 +1375,27 @@ if __name__ == '__main__':
 	# ]
 
 	trainlist = [
-		# ('H1', 'A1'),
-		# ('H1', 'A2'),
-		# ('H1', 'B1'),
-		# ('H1', 'B2')
+		# ('M1', 'A1'),
+		# ('M1', 'A2'),
+		# ('M1', 'B1'),
+		# ('M1', 'B2')
 		# ('H1', 'C1'),
 		# ('H1', 'C2')
-		('M1', 'A1C1'),
-		('M1', 'A1C2'),
-		('M1', 'B1C1'),
-		('M1', 'B1C2'),
-		('M1', 'A2C1'),
-		('M1', 'A2C2'),
-		('M1', 'B2C1'),
-		('M1', 'B2C2'),
+		
+		('H1', 'A1C1'),
+		('H1', 'A1C2'),
+		('H1', 'B1C1'),
+		('H1', 'B1C2'),
+		('H1', 'A2C1'),
+		('H1', 'A2C2'),
+		('H1', 'B2C1'),
+		('H1', 'B2C2'),
+
 	]
 
 
-	# doubletrainlist = ["A1","A2", "B1","B2", "C1", "C2"]
+	doubletrainlist = ["A1","A2", "B1","B2"]
+
 
 	###################################################
 	##################### train 2 #####################
@@ -1404,52 +1409,50 @@ if __name__ == '__main__':
 	# 	trainModel(train_X, train_y, tr[0] + '_fea_sess_final_same_' + tr[1])
 
 	# for tr in phonelist:
-	# 	for g in grouplist:
+	# 	for g in doubletrainlist:
 	# 		train_X = np.vstack((datadict[tr][g][0], datadict[tr]["C2"][0]))
 	# 		train_y = np.hstack((datadict[tr][g][1], datadict[tr]["C2"][1]))
 
-	# 		trainModel(train_X, train_y, "M_H_ada_" + tr + g)
+	# 		trainModel(train_X, train_y, "M_H_" + tr + g + "C2_enc")
 
 
 	###################################################
 	##################### train 1 #####################
 	###################################################
 
-	for tr in phonelist:
-		for g in grouplist:
-			# print(len(datadict[tr][g]))
-			train_X = datadict[tr][g][0]
-			train_y = datadict[tr][g][1]
+	# for tr in phonelist:
+	# 	for g in grouplist:
+	# 		# print(len(datadict[tr][g]))
+	# 		train_X = datadict[tr][g][0]
+	# 		train_y = datadict[tr][g][1]
 
-			trainModel(train_X, train_y, 'M_H_ada_' + tr + g)
+	# 		trainModel(train_X, train_y, 'M_H_tcp_' + tr + g + '_pkg')
 
 
 	###################################################
 	###################### test 1 #####################
 	###################################################
-	# csvdict = {}
-	# scoredict = {}
-	# csvheader = []
 
-	# for te in phonelist:
-	# 	for g in grouplist:
-	# 		print('test:')
-	# 		print(te)
-	# 		print(g)
-	# 		for tup in trainlist:
-	# 			print("train:")
-	# 			print("M_H_" + tup[0] + tup[1])
-	# 			# print(datadict[te][1].shape)
+	csvdict = {}
+	scoredict = {}
+	csvheader = []
 
-	# 			scoredict = testModel(datadict[te][g][0], datadict[te][g][1], "M_H_tcp_" + tup[0] + tup[1], appnum)
-	# 			csvdict[(tup[1], g)] = scoredict
-	# 			# print(csvdict[(tup[0] + tup[1], g)])
+	for te in phonelist:
+		for g in grouplist:
+			print('test:')
+			print(te)
+			print(g)
+			for tup in trainlist:
+				print("train:")
+				print("M_H_tcp_" + tup[0] + tup[1])
+				# print(datadict[te][1].shape)
+				# testModel(datadict[te][g][0], datadict[te][g][1], "M_H_" + tup[0] + tup[1], appnum)
+				scoredict = testModel(datadict[te][g][0], datadict[te][g][1], "M_H_" + tup[0] + tup[1] + "_enc", appnum)
+				csvdict[(tup[1], g)] = scoredict
 
-	# 		csvheader.append(g)
+			csvheader.append(g)
 
-	# toCSV(csvdict, csvheader, appnum, "train_H1_test_M2_tcp_1")
-
-
+	toCSV(csvdict, csvheader, appnum, "train_H1_test_M1_stati_enc_1", trainlist)
 
 
 	# for te in appset.phonelist:

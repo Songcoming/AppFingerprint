@@ -27,7 +27,33 @@ class SVCmul:
 		# train_y = self.y[:-100]
 		# test_X  = self.X[-100:]
 		# test_y  = self.y[-100:]
+		# lowdim = np.array([x * 5 for x in range(12)[1:]])
+		# ascorelist = np.zeros((11,))
 
+		# for i in range(11):
+		# 	pca = PCA(n_components = lowdim[i])
+		# 	pca.fit(self.X)
+		# 	x_new = pca.transform(self.X)
+
+		# 	print(x_new.shape)
+
+		# 	train_X, test_X, train_y, test_y = train_test_split(x_new, self.y, test_size = 0.2, random_state = 0)
+
+		# 	# clf = svm.LinearSVC(C = 1000)
+		# 	clf = svm.SVC(decision_function_shape='ovo', C = 3500, kernel='rbf', probability = True)
+		# 	score_y = clf.fit(train_X, train_y)
+
+		# # test_y_bin = label_binarize(test_y, classes = [1, 2, 3, 4])
+		# # n_classes = test_y_bin.shape[1]
+
+		# # k_fold = KFold(n_splits = 4)
+		# # # scores = cross_val_score(clf, train_X, train_y, cv = k_fold)
+		# # result = cross_val_predict(clf, self.X, self.y, cv = k_fold)
+
+		# 	pre_res = clf.predict(test_X)
+		# 	pro_res = clf.predict_proba(test_X)
+
+		# 	ascorelist[i] = accuracy_score(test_y, pre_res)
 		train_X, test_X, train_y, test_y = train_test_split(self.X, self.y, test_size = 0.2, random_state = 0)
 
 		clf = svm.SVC(decision_function_shape='ovo', C = 3500, kernel='rbf', probability = True)
@@ -89,6 +115,18 @@ class SVCmul:
 		# plt.xlabel('th')
 		# plt.ylabel('True Positive Rate')
 		# plt.legend(loc="lower right")
+		# plt.show()
+
+		# plt.figure(2)
+		# lw = 2
+
+		# plt.plot(lowdim, ascorelist , lw=lw)
+
+		# plt.xlim([0.0, 56.0])
+		# plt.ylim([0.0, 1.05])
+		# plt.xlabel('Dimension')
+		# plt.ylabel('Accuracy')
+		# # plt.legend(loc="lower right")
 		# plt.show()
 
 		# pe = plotE(pro_res, test_y)

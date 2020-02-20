@@ -13,16 +13,20 @@ def filter(sf):
 	fn    =  sf[-index: ].split('.')
 	df    =  dp + fn[0] + "_aff." + fn[-1]
 
-	# cmd_filter = "'tcp && !(tcp.port == 80) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
+	cmd_filter = "'tcp && !(tcp.port == 80) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
 
 	# 2018-03-20 by r4mind
-	cmd_filter = "'(tcp || http) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
+	# cmd_filter = "'(tcp || http) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
 	# end
-	os.system("tshark -r %s -w %s -F pcap -Y %s" % (sf, df, cmd_filter))
+
+	dfn = "../../../M_H/aff/for/enc/" + fn[0] + "_enc." + fn[-1]
+
+	# cmd_filter = "'ip.host == 192.168.2.13 && (tcp || http) && !(tcp.analysis.flags && !tcp.analysis.window_update)'"
+	os.system("tshark -r %s -w %s -F pcap -Y %s" % (sf, dfn, cmd_filter))
 
 	return df
 
-def main(argv):
+def main(argv): 
 	srcfilepath = ''
 
 	try:

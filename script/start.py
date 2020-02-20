@@ -224,6 +224,18 @@ def getBestAccuracy():
 	s_fea_X = scaleFeature(fea_X)
 	bestAccuracy = startRFMul(s_fea_X, fea_y)
 
+
+	# plt.figure(4)
+	# plt.plot(lowestflow, ascorelist, lw = 2)
+
+	# plt.xlim([0.0, 62.0])
+	# plt.ylim([0.0, 1.05])
+	# plt.xlabel('The lowest Flow length')
+	# plt.ylabel('Accuracy')
+
+	# plt.show()
+
+
 def FSENtest():
 	fea_X = np.empty(shape = [0, 57])
 	fea_y = np.empty(shape = [1, 0])
