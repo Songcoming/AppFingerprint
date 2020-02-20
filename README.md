@@ -1,2 +1,2 @@
 # AppFingerprint
-graguation
+graduation
